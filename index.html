@@ -699,29 +699,16 @@
             align-items: center;
             justify-content: center;
             font-size: 1.8rem;
-            cursor: grab;
+            cursor: pointer;
             z-index: 550;
             box-shadow: 0 4px 25px rgba(74, 144, 226, 0.4);
-            transition: box-shadow 0.3s, transform 0.2s;
+            transition: var(--transition);
             border: none;
-            user-select: none;
-            touch-action: none;
         }
         .ai-chat-icon:hover {
-            transform: scale(1.05);
+            transform: scale(1.08);
             box-shadow: 0 8px 35px rgba(74, 144, 226, 0.5);
         }
-        .ai-chat-icon:active {
-            cursor: grabbing;
-            transform: scale(0.95);
-        }
-        .ai-chat-icon.dragging {
-            cursor: grabbing;
-            transform: scale(0.95);
-            box-shadow: 0 12px 45px rgba(74, 144, 226, 0.6);
-            transition: none;
-        }
-
         .ai-chat-window {
             position: fixed;
             bottom: 100px;
@@ -760,14 +747,17 @@
             background: none;
             border: none;
             color: #fff;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             cursor: pointer;
             padding: 4px 8px;
             border-radius: 8px;
-            transition: background 0.2s;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .ai-chat-header button:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
         }
         .ai-chat-messages {
             flex: 1;
@@ -841,65 +831,125 @@
             background: var(--bg-secondary);
         }
 
-        /* ===== AI FULLSCREEN OVERLAY ===== */
+        /* ===== FULLSCREEN AI CHAT OVERLAY ===== */
         .ai-fullscreen-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             z-index: 7000;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             display: none;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            animation: fadeInBlur 0.3s ease;
+            animation: fadeIn 0.3s ease;
         }
         .ai-fullscreen-overlay.active {
             display: flex;
         }
-        @keyframes fadeInBlur {
+        @keyframes fadeIn {
             from {
                 opacity: 0;
-                backdrop-filter: blur(0px);
+                transform: scale(0.97);
             }
             to {
                 opacity: 1;
-                backdrop-filter: blur(12px);
+                transform: scale(1);
             }
         }
-        .ai-fullscreen-overlay .ai-chat-window {
-            position: relative;
-            bottom: auto;
-            right: auto;
-            width: 95%;
-            max-width: 900px;
-            height: 90vh;
-            max-height: 90vh;
-            z-index: 7001;
-            border-radius: 24px;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+        .ai-fullscreen-container {
+            width: 100%;
+            max-width: 1100px;
+            height: 92vh;
+            max-height: 900px;
+            background: var(--bg-card);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
             display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            background: rgba(20, 20, 30, 0.85);
         }
-        .ai-fullscreen-overlay .ai-chat-window .ai-chat-header {
-            border-radius: 24px 24px 0 0;
+        body.light-mode .ai-fullscreen-container {
+            background: rgba(245, 245, 250, 0.92);
+            border-color: rgba(0, 0, 0, 0.08);
         }
-        .ai-fullscreen-overlay .ai-chat-window .ai-chat-header .header-actions button {
-            font-size: 1.3rem;
+        .ai-fullscreen-container .ai-chat-header {
+            padding: 18px 24px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-gold));
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            flex-shrink: 0;
+            border-radius: 28px 28px 0 0;
         }
-        .ai-fullscreen-overlay .ai-chat-messages {
-            padding: 20px;
+        .ai-fullscreen-container .ai-chat-header .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
         }
-        .ai-fullscreen-overlay .ai-chat-input {
-            padding: 14px 20px;
+        .ai-fullscreen-container .ai-chat-header button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 10px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .ai-fullscreen-overlay .ai-chat-input input {
+        .ai-fullscreen-container .ai-chat-header button:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
+        .ai-fullscreen-container .ai-chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+        }
+        .ai-fullscreen-container .ai-chat-messages .ai-msg {
+            font-size: 1.05rem;
+            padding: 12px 18px;
+            max-width: 80%;
+        }
+        .ai-fullscreen-container .ai-chat-messages .user-msg {
+            font-size: 1.05rem;
+            padding: 12px 18px;
+            max-width: 80%;
+        }
+        .ai-fullscreen-container .ai-chat-input {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-secondary);
+            flex-shrink: 0;
+            border-radius: 0 0 28px 28px;
+        }
+        .ai-fullscreen-container .ai-chat-input input {
             font-size: 1.05rem;
             padding: 12px 18px;
         }
-        .ai-fullscreen-overlay .ai-chat-input button {
-            font-size: 1.1rem;
-            padding: 10px 24px;
+        .ai-fullscreen-container .ai-chat-input button {
+            font-size: 1.2rem;
+            padding: 12px 24px;
+        }
+        .ai-fullscreen-container .ai-question-limit {
+            font-size: 0.8rem;
+            padding: 6px 20px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+            background: var(--bg-secondary);
+            border-radius: 0 0 28px 28px;
         }
 
         /* ===== AI BUTTON IN LESSONS/QUIZZES ===== */
@@ -1543,10 +1593,19 @@
                 height: 400px;
                 bottom: 80px;
             }
-            .ai-fullscreen-overlay .ai-chat-window {
-                height: 85vh;
-                max-height: 85vh;
-                width: 98%;
+            .ai-fullscreen-container {
+                height: 95vh;
+                max-height: none;
+                border-radius: 20px;
+            }
+            .ai-fullscreen-container .ai-chat-header {
+                border-radius: 20px 20px 0 0;
+            }
+            .ai-fullscreen-container .ai-chat-input {
+                border-radius: 0 0 20px 20px;
+            }
+            .ai-fullscreen-container .ai-question-limit {
+                border-radius: 0 0 20px 20px;
             }
         }
         @media(max-width:576px) {
@@ -1594,20 +1653,58 @@
             .ai-chat-window {
                 height: 350px;
                 bottom: 70px;
-                right: 5px;
-                width: 98%;
-            }
-            .ai-fullscreen-overlay .ai-chat-window {
-                height: 80vh;
-                max-height: 80vh;
-                width: 100%;
-                border-radius: 16px;
             }
             .certificate-preview .cert-title {
                 font-size: 1.5rem;
             }
             .certificate-preview .cert-name {
                 font-size: 1.3rem;
+            }
+            .ai-fullscreen-container {
+                border-radius: 16px;
+                height: 98vh;
+            }
+            .ai-fullscreen-container .ai-chat-header {
+                border-radius: 16px 16px 0 0;
+                padding: 14px 18px;
+            }
+            .ai-fullscreen-container .ai-chat-messages {
+                padding: 16px;
+            }
+            .ai-fullscreen-container .ai-chat-input {
+                padding: 12px 16px;
+                border-radius: 0 0 16px 16px;
+            }
+            .ai-fullscreen-container .ai-question-limit {
+                border-radius: 0 0 16px 16px;
+            }
+        }
+
+        /* ===== RTL OVERRIDES ===== */
+        [dir="rtl"] .ai-chat-input button {
+            margin-left: 0;
+            margin-right: 8px;
+        }
+        [dir="rtl"] .hub-comment {
+            margin-left: 0;
+            margin-right: 20px;
+        }
+        [dir="rtl"] .back-to-top {
+            left: auto;
+            right: 30px;
+        }
+        [dir="rtl"] .ai-chat-icon {
+            right: auto;
+            left: 30px;
+        }
+        [dir="rtl"] .ai-chat-window {
+            right: auto;
+            left: 30px;
+        }
+        @media(max-width:992px) {
+            [dir="rtl"] .ai-chat-window {
+                right: auto;
+                left: 10px;
             }
         }
     </style>
@@ -1862,19 +1959,14 @@
         </div>
     </section>
 
-    <!-- ===== AI FULLSCREEN OVERLAY ===== -->
-    <div class="ai-fullscreen-overlay" id="aiFullscreenOverlay">
-        <!-- يتم نسخ محتوى نافذة المحادثة هنا ديناميكياً -->
-    </div>
-
     <!-- ===== AI CHAT ICON & WINDOW ===== -->
     <button class="ai-chat-icon" id="aiChatIcon"><i class="fas fa-robot"></i></button>
     <div class="ai-chat-window" id="aiChatWindow">
         <div class="ai-chat-header">
             <span id="aiChatTitle">🤖 أناناس AI</span>
             <div class="header-actions">
-                <button id="aiChatExpandBtn" title="تكبير"><i class="fas fa-expand"></i></button>
-                <button id="aiChatCloseBtn" title="إغلاق">&times;</button>
+                <button id="aiChatExpandBtn" title="شاشة كاملة"><i class="fas fa-expand"></i></button>
+                <button id="aiChatClose">&times;</button>
             </div>
         </div>
         <div class="ai-chat-messages" id="aiChatMessages">
@@ -1885,6 +1977,26 @@
             <button id="aiChatSend"><i class="fas fa-paper-plane"></i></button>
         </div>
         <div class="ai-question-limit" id="aiChatLimit">أسئلة اليوم المتبقية: 5</div>
+    </div>
+
+    <!-- ===== AI FULLSCREEN OVERLAY ===== -->
+    <div class="ai-fullscreen-overlay" id="aiFullscreenOverlay">
+        <div class="ai-fullscreen-container">
+            <div class="ai-chat-header">
+                <span id="aiFullscreenTitle">🤖 أناناس AI</span>
+                <div class="header-actions">
+                    <button id="aiFullscreenClose" title="إغلاق"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="ai-chat-messages" id="aiFullscreenMessages">
+                <div class="ai-msg">مرحباً! أنا أناناس AI، مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟</div>
+            </div>
+            <div class="ai-chat-input">
+                <input type="text" id="aiFullscreenInput" placeholder="اسألني عن أي شيء...">
+                <button id="aiFullscreenSend"><i class="fas fa-paper-plane"></i></button>
+            </div>
+            <div class="ai-question-limit" id="aiFullscreenLimit">أسئلة اليوم المتبقية: 5</div>
+        </div>
     </div>
 
     <!-- ===== FOOTER ===== -->
@@ -2023,15 +2135,6 @@
         const siteLogo = $('siteLogo'),
             heroLogo = $('heroLogo'),
             brandName = $('brandName');
-        const aiChatIcon = $('aiChatIcon');
-        const aiChatWindow = $('aiChatWindow');
-        const aiChatMessages = $('aiChatMessages');
-        const aiChatInput = $('aiChatInput');
-        const aiChatSend = $('aiChatSend');
-        const aiChatCloseBtn = $('aiChatCloseBtn');
-        const aiChatExpandBtn = $('aiChatExpandBtn');
-        const aiFullscreenOverlay = $('aiFullscreenOverlay');
-        const aiChatLimit = $('aiChatLimit');
 
         // ================================================================
         // 4. AUTH
@@ -2577,6 +2680,8 @@
             // Update AI chat title
             document.getElementById('aiChatTitle').textContent = '🤖 ' + (lang === 'ar' ? aiSettings.nameAr : aiSettings
             .nameEn);
+            document.getElementById('aiFullscreenTitle').textContent = '🤖 ' + (lang === 'ar' ? aiSettings.nameAr :
+                aiSettings.nameEn);
             document.getElementById('aiWelcomeMsg').textContent = t.aiWelcome;
             if (currentUserData) {
                 renderDashboard();
@@ -2678,179 +2783,7 @@
         animateParticles();
 
         // ================================================================
-        // 8. AI CHAT - DRAGGABLE ICON & FULLSCREEN
-        // ================================================================
-        // --- Draggable AI Icon ---
-        let isDragging = false;
-        let dragStartX = 0,
-            dragStartY = 0;
-        let dragOffsetX = 0,
-            dragOffsetY = 0;
-        let iconPosX = 0,
-            iconPosY = 0;
-
-        // Load saved position
-        try {
-            const saved = localStorage.getItem('aiChatIconPos');
-            if (saved) {
-                const pos = JSON.parse(saved);
-                iconPosX = pos.x || 0;
-                iconPosY = pos.y || 0;
-                aiChatIcon.style.transform = `translate(${iconPosX}px, ${iconPosY}px)`;
-            }
-        } catch (e) {}
-
-        aiChatIcon.addEventListener('mousedown', (e) => {
-            if (e.button !== 0) return;
-            isDragging = true;
-            const rect = aiChatIcon.getBoundingClientRect();
-            dragOffsetX = e.clientX - rect.left;
-            dragOffsetY = e.clientY - rect.top;
-            aiChatIcon.classList.add('dragging');
-            e.preventDefault();
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const newX = e.clientX - dragOffsetX;
-            const newY = e.clientY - dragOffsetY;
-            // Keep within viewport bounds
-            const maxX = window.innerWidth - 70;
-            const maxY = window.innerHeight - 70;
-            iconPosX = Math.max(0, Math.min(newX, maxX));
-            iconPosY = Math.max(0, Math.min(newY, maxY));
-            aiChatIcon.style.transform = `translate(${iconPosX}px, ${iconPosY}px)`;
-            e.preventDefault();
-        });
-
-        document.addEventListener('mouseup', () => {
-            if (isDragging) {
-                isDragging = false;
-                aiChatIcon.classList.remove('dragging');
-                // Save position
-                try {
-                    localStorage.setItem('aiChatIconPos', JSON.stringify({ x: iconPosX, y: iconPosY }));
-                } catch (e) {}
-            }
-        });
-
-        // Touch support
-        aiChatIcon.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            isDragging = true;
-            const rect = aiChatIcon.getBoundingClientRect();
-            dragOffsetX = touch.clientX - rect.left;
-            dragOffsetY = touch.clientY - rect.top;
-            aiChatIcon.classList.add('dragging');
-            e.preventDefault();
-        }, { passive: false });
-
-        document.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const touch = e.touches[0];
-            const newX = touch.clientX - dragOffsetX;
-            const newY = touch.clientY - dragOffsetY;
-            const maxX = window.innerWidth - 70;
-            const maxY = window.innerHeight - 70;
-            iconPosX = Math.max(0, Math.min(newX, maxX));
-            iconPosY = Math.max(0, Math.min(newY, maxY));
-            aiChatIcon.style.transform = `translate(${iconPosX}px, ${iconPosY}px)`;
-            e.preventDefault();
-        }, { passive: false });
-
-        document.addEventListener('touchend', () => {
-            if (isDragging) {
-                isDragging = false;
-                aiChatIcon.classList.remove('dragging');
-                try {
-                    localStorage.setItem('aiChatIconPos', JSON.stringify({ x: iconPosX, y: iconPosY }));
-                } catch (e) {}
-            }
-        });
-
-        // --- AI Chat Toggle ---
-        aiChatIcon.addEventListener('click', (e) => {
-            // Only toggle if not dragging
-            if (isDragging) return;
-            aiChatWindow.classList.toggle('active');
-            if (aiChatWindow.classList.contains('active')) {
-                aiChatInput.focus();
-            }
-        });
-
-        aiChatCloseBtn.addEventListener('click', () => {
-            aiChatWindow.classList.remove('active');
-            aiFullscreenOverlay.classList.remove('active');
-        });
-
-        // --- Fullscreen / Expand ---
-        aiChatExpandBtn.addEventListener('click', () => {
-            const overlay = aiFullscreenOverlay;
-            // Clone the chat window into the overlay
-            const chatClone = aiChatWindow.cloneNode(true);
-            // Remove the expand button from clone (keep close)
-            const cloneExpandBtn = chatClone.querySelector('#aiChatExpandBtn');
-            if (cloneExpandBtn) cloneExpandBtn.remove();
-            // Update close button to close overlay
-            const cloneCloseBtn = chatClone.querySelector('#aiChatCloseBtn');
-            if (cloneCloseBtn) {
-                cloneCloseBtn.onclick = () => {
-                    overlay.classList.remove('active');
-                };
-            }
-            // Remove existing content and append clone
-            overlay.innerHTML = '';
-            overlay.appendChild(chatClone);
-            // Make sure the chat window inside overlay has proper styles
-            chatClone.style.position = 'relative';
-            chatClone.style.bottom = 'auto';
-            chatClone.style.right = 'auto';
-            chatClone.style.width = '95%';
-            chatClone.style.maxWidth = '900px';
-            chatClone.style.height = '90vh';
-            chatClone.style.maxHeight = '90vh';
-            chatClone.style.display = 'flex';
-            chatClone.style.borderRadius = '24px';
-            // Ensure header has proper border radius
-            const header = chatClone.querySelector('.ai-chat-header');
-            if (header) {
-                header.style.borderRadius = '24px 24px 0 0';
-            }
-            // Fix input and messages
-            const messages = chatClone.querySelector('.ai-chat-messages');
-            if (messages) messages.style.padding = '20px';
-            const inputArea = chatClone.querySelector('.ai-chat-input');
-            if (inputArea) inputArea.style.padding = '14px 20px';
-            // Show overlay
-            overlay.classList.add('active');
-        });
-
-        // Close fullscreen on overlay click (outside chat)
-        aiFullscreenOverlay.addEventListener('click', (e) => {
-            if (e.target === aiFullscreenOverlay) {
-                aiFullscreenOverlay.classList.remove('active');
-            }
-        });
-
-        // Also close with Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                if (aiFullscreenOverlay.classList.contains('active')) {
-                    aiFullscreenOverlay.classList.remove('active');
-                }
-                if (aiChatWindow.classList.contains('active')) {
-                    aiChatWindow.classList.remove('active');
-                }
-            }
-        });
-
-        // ================================================================
-        // 9. AI CHAT FUNCTIONALITY (rest of the code remains the same)
-        // ================================================================
-        // ... (all the existing AI chat, courses, dashboard, admin functions remain)
-
-        // ================================================================
-        // 10. COURSES
+        // 8. COURSES
         // ================================================================
         async function loadCourses() {
             const snapshot = await db.collection('courses').orderBy('createdAt', 'desc').get();
@@ -3044,7 +2977,7 @@
         }
 
         // ================================================================
-        // 11. XP SYSTEM
+        // 9. XP SYSTEM
         // ================================================================
         async function addXP(uid, amount) {
             const doc = await db.collection('users').doc(uid).get();
@@ -3062,7 +2995,7 @@
         }
 
         // ================================================================
-        // 12. QUIZ SYSTEM
+        // 10. QUIZ SYSTEM
         // ================================================================
         async function openQuiz(courseId, lessonId, quizId) {
             const snapshot = await db.collection('quizzes').doc(quizId).get();
@@ -3177,7 +3110,7 @@
         }
 
         // ================================================================
-        // 13. DASHBOARD
+        // 11. DASHBOARD
         // ================================================================
         function renderDashboard() {
             if (!currentUser || !currentUserData) { dashGuest.style.display = 'block';
@@ -3260,7 +3193,7 @@
         }
 
         // ================================================================
-        // 14. AI SYSTEM (Groq Integration)
+        // 12. AI SYSTEM (Groq Integration)
         // ================================================================
         function updateAIQuestionLimit() {
             if (!currentUserData) return;
@@ -3277,6 +3210,8 @@
             const remaining = Math.max(0, packageLimit - (currentUserData.aiDailyCount || 0));
             document.getElementById('aiQuestionsLeft').textContent = remaining;
             document.getElementById('aiChatLimit').textContent =
+                (translations[currentLang] || translations.ar).aiQuestionLimit + ' ' + remaining;
+            document.getElementById('aiFullscreenLimit').textContent =
                 (translations[currentLang] || translations.ar).aiQuestionLimit + ' ' + remaining;
             document.getElementById('aiPackageLabel').textContent =
                 (translations[currentLang] || translations.ar).aiPackageLabel + ' ' + (currentUserData.aiPackage ||
@@ -3463,12 +3398,46 @@
             container.innerHTML = html;
         }
 
-        // AI Chat UI - Send message
-        aiChatSend.addEventListener('click', async () => {
-            const input = aiChatInput;
+        // ===== AI Chat UI (Floating) =====
+        document.getElementById('aiChatIcon').addEventListener('click', () => {
+            document.getElementById('aiChatWindow').classList.toggle('active');
+        });
+        document.getElementById('aiChatClose').addEventListener('click', () => {
+            document.getElementById('aiChatWindow').classList.remove('active');
+        });
+
+        // ===== AI Chat UI (Fullscreen) =====
+        document.getElementById('aiChatExpandBtn').addEventListener('click', () => {
+            // Sync messages from floating to fullscreen
+            const floatingMessages = document.getElementById('aiChatMessages');
+            const fullscreenMessages = document.getElementById('aiFullscreenMessages');
+            fullscreenMessages.innerHTML = floatingMessages.innerHTML;
+            // Show fullscreen overlay
+            document.getElementById('aiFullscreenOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            // Update limit
+            const limitText = document.getElementById('aiChatLimit').textContent;
+            document.getElementById('aiFullscreenLimit').textContent = limitText;
+        });
+
+        document.getElementById('aiFullscreenClose').addEventListener('click', () => {
+            document.getElementById('aiFullscreenOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        document.getElementById('aiFullscreenOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                document.getElementById('aiFullscreenOverlay').classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // ===== AI Chat Send (Floating) =====
+        document.getElementById('aiChatSend').addEventListener('click', async () => {
+            const input = document.getElementById('aiChatInput');
             const msg = input.value.trim();
             if (!msg) return;
-            const messages = aiChatMessages;
+            const messages = document.getElementById('aiChatMessages');
             messages.innerHTML += `<div class="user-msg">${msg}</div>`;
             input.value = '';
             messages.scrollTop = messages.scrollHeight;
@@ -3484,7 +3453,6 @@
             messages.scrollTop = messages.scrollHeight;
 
             const result = await askAI(msg, {});
-            // Remove thinking message
             const lastMsg = messages.lastElementChild;
             if (lastMsg && lastMsg.textContent.includes('⏳')) lastMsg.remove();
 
@@ -3495,13 +3463,58 @@
             }
             messages.scrollTop = messages.scrollHeight;
             updateAIQuestionLimit();
+            // Sync to fullscreen if open
+            if (document.getElementById('aiFullscreenOverlay').classList.contains('active')) {
+                document.getElementById('aiFullscreenMessages').innerHTML = messages.innerHTML;
+                document.getElementById('aiFullscreenLimit').textContent = document.getElementById('aiChatLimit')
+                    .textContent;
+            }
+        });
+        document.getElementById('aiChatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('aiChatSend').click();
         });
 
-        aiChatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') aiChatSend.click();
+        // ===== AI Chat Send (Fullscreen) =====
+        document.getElementById('aiFullscreenSend').addEventListener('click', async () => {
+            const input = document.getElementById('aiFullscreenInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            const messages = document.getElementById('aiFullscreenMessages');
+            messages.innerHTML += `<div class="user-msg">${msg}</div>`;
+            input.value = '';
+            messages.scrollTop = messages.scrollHeight;
+
+            const t = translations[currentLang] || translations.ar;
+            if (!canAskAI() && !isAdmin) {
+                messages.innerHTML += `<div class="ai-msg" style="color:var(--danger);">❌ ${t.aiLimitReached}</div>`;
+                messages.scrollTop = messages.scrollHeight;
+                return;
+            }
+
+            messages.innerHTML += `<div class="ai-msg" style="opacity:0.6;">⏳ ${t.aiThinking}</div>`;
+            messages.scrollTop = messages.scrollHeight;
+
+            const result = await askAI(msg, {});
+            const lastMsg = messages.lastElementChild;
+            if (lastMsg && lastMsg.textContent.includes('⏳')) lastMsg.remove();
+
+            if (result.error) {
+                messages.innerHTML += `<div class="ai-msg" style="color:var(--danger);">❌ ${result.error}</div>`;
+            } else {
+                messages.innerHTML += `<div class="ai-msg">${result.reply}</div>`;
+            }
+            messages.scrollTop = messages.scrollHeight;
+            updateAIQuestionLimit();
+            // Sync back to floating
+            document.getElementById('aiChatMessages').innerHTML = messages.innerHTML;
+            document.getElementById('aiChatLimit').textContent = document.getElementById('aiFullscreenLimit')
+                .textContent;
+        });
+        document.getElementById('aiFullscreenInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('aiFullscreenSend').click();
         });
 
-        // AI Context Functions
+        // ===== AI Context Functions =====
         window.askAIAboutLesson = async function(courseId, moduleId, lessonId) {
             const t = translations[currentLang] || translations.ar;
             if (!canAskAI() && !isAdmin) { alert(t.aiLimitReached); return; }
@@ -3510,8 +3523,8 @@
                 `أنا في درس "${lesson ? lesson.title : 'درس'}" في دورة التصميم. اشرح لي هذا الدرس بشكل مبسط، وقدم لي نصائح لفهمه بشكل أفضل.`;
             const result = await askAI(prompt, { courseId, lessonId });
             if (result.error) { alert('❌ ' + result.error); return; }
-            aiChatWindow.classList.add('active');
-            const messages = aiChatMessages;
+            document.getElementById('aiChatWindow').classList.add('active');
+            const messages = document.getElementById('aiChatMessages');
             messages.innerHTML += `<div class="user-msg">${prompt}</div>`;
             messages.innerHTML += `<div class="ai-msg">${result.reply}</div>`;
             messages.scrollTop = messages.scrollHeight;
@@ -3526,8 +3539,8 @@
                 `أنا في دورة "${course ? course.title : 'تصميم'}". أعطني نظرة عامة عن الدورة، وما هي المهارات التي سأتعلمها، وكيف يمكنني الاستفادة القصوى منها.`;
             const result = await askAI(prompt, { courseId });
             if (result.error) { alert('❌ ' + result.error); return; }
-            aiChatWindow.classList.add('active');
-            const messages = aiChatMessages;
+            document.getElementById('aiChatWindow').classList.add('active');
+            const messages = document.getElementById('aiChatMessages');
             messages.innerHTML += `<div class="user-msg">${prompt}</div>`;
             messages.innerHTML += `<div class="ai-msg">${result.reply}</div>`;
             messages.scrollTop = messages.scrollHeight;
@@ -3542,8 +3555,8 @@
                 `أنا في اختبار "${quiz.exists ? quiz.data().title : 'اختبار'}". ساعدني في فهم كيفية الإجابة على أسئلة الاختبار بشكل صحيح.`;
             const result = await askAI(prompt, { courseId, lessonId, quizId });
             if (result.error) { alert('❌ ' + result.error); return; }
-            aiChatWindow.classList.add('active');
-            const messages = aiChatMessages;
+            document.getElementById('aiChatWindow').classList.add('active');
+            const messages = document.getElementById('aiChatMessages');
             messages.innerHTML += `<div class="user-msg">${prompt}</div>`;
             messages.innerHTML += `<div class="ai-msg">${result.reply}</div>`;
             messages.scrollTop = messages.scrollHeight;
@@ -3563,8 +3576,8 @@
                 `أنا في اختبار وأواجه هذا السؤال: "${qText}". ساعدني في فهم السؤال وإعطائي تلميحات للإجابة عليه دون إعطائي الإجابة مباشرة.`;
             const result = await askAI(prompt, { courseId, lessonId, quizId, questionIndex });
             if (result.error) { alert('❌ ' + result.error); return; }
-            aiChatWindow.classList.add('active');
-            const messages = aiChatMessages;
+            document.getElementById('aiChatWindow').classList.add('active');
+            const messages = document.getElementById('aiChatMessages');
             messages.innerHTML += `<div class="user-msg">${prompt}</div>`;
             messages.innerHTML += `<div class="ai-msg">${result.reply}</div>`;
             messages.scrollTop = messages.scrollHeight;
@@ -3572,7 +3585,7 @@
         };
 
         // ================================================================
-        // 15. ADMIN PANEL (Full) - abbreviated for brevity, but all functions exist
+        // 13. ADMIN PANEL (Full)
         // ================================================================
         async function loadAllAdminData() {
             await loadCourses();
@@ -3671,6 +3684,9 @@
 
         function updateBranding() {
             const isLight = document.body.classList.contains('light-mode');
+            const name = currentLang === 'ar' ? siteSettings.nameAr : siteSettings.nameEn;
+            brandName.innerHTML = name.replace(/أكاديمي|Academy/, match =>
+                ` ${match} <span class="gold">${currentLang === 'ar' ? 'أكاديمي' : 'Academy'}</span>`);
             if (currentLang === 'ar') {
                 brandName.innerHTML = `${siteSettings.nameAr || 'أناناس'} <span class="gold">أكاديمي</span>`;
             } else {
@@ -3737,6 +3753,8 @@
                 .join('\n');
             document.getElementById('aiChatTitle').textContent = '🤖 ' + (currentLang === 'ar' ? aiSettings.nameAr :
                 aiSettings.nameEn);
+            document.getElementById('aiFullscreenTitle').textContent = '🤖 ' + (currentLang === 'ar' ? aiSettings
+                .nameAr : aiSettings.nameEn);
         }
 
         async function loadGroqApiKey() {
@@ -3831,12 +3849,14 @@
             });
             document.getElementById('aiChatTitle').textContent = '🤖 ' + (currentLang === 'ar' ? aiSettings.nameAr :
                 aiSettings.nameEn);
+            document.getElementById('aiFullscreenTitle').textContent = '🤖 ' + (currentLang === 'ar' ? aiSettings
+                .nameAr : aiSettings.nameEn);
             alert('✅ تم حفظ إعدادات المساعد');
             await addLog(currentUser.uid, 'حفظ إعدادات الذكاء الاصطناعي', '');
         }
 
         // ================================================================
-        // 16. RENDER ADMIN PANELS (abbreviated - core functions exist)
+        // 14. RENDER ADMIN PANELS
         // ================================================================
         function renderAdminPanels() {
             renderAdminCourses();
@@ -4077,6 +4097,7 @@
             const existing = await db.collection('issuedCertificates').where('studentUid', '==', studentUid).where(
                 'courseId', '==', courseId).get();
             if (!existing.empty) { alert('✅ شهادة موجودة مسبقاً لهذا الطالب في هذه الدورة'); return; }
+
             const certId = 'CERT-' + Date.now() + '-' + Math.random().toString(36).slice(-6);
             const certData = {
                 studentUid,
@@ -4262,7 +4283,7 @@
         }
 
         // ================================================================
-        // 17. ADMIN CRUD FUNCTIONS (wrapped for global access)
+        // 15. ADMIN CRUD FUNCTIONS
         // ================================================================
         window.openAddCourse = function() {
             const t = translations[currentLang] || translations.ar;
@@ -4601,7 +4622,7 @@
         };
 
         // ================================================================
-        // 18. LEVELS, ACHIEVEMENTS, XP SETTINGS, SITE SETTINGS
+        // 16. LEVELS, ACHIEVEMENTS, XP SETTINGS, SITE SETTINGS
         // ================================================================
         window.openAddLevel = function() {
             const t = translations[currentLang] || translations.ar;
@@ -4748,7 +4769,7 @@
         };
 
         // ================================================================
-        // 19. ADDITIONAL ADMIN FUNCTIONS
+        // 17. ADDITIONAL ADMIN FUNCTIONS
         // ================================================================
         window.viewStudent = function(uid) {
             const student = allStudents.find(s => s.uid === uid);
@@ -4781,7 +4802,7 @@
         };
 
         // ================================================================
-        // 20. EDIT HERO & TAGLINE
+        // 18. EDIT HERO & TAGLINE
         // ================================================================
         document.getElementById('editHeroBtn').addEventListener('click', () => {
             const t = translations[currentLang] || translations.ar;
@@ -4842,7 +4863,74 @@
         };
 
         // ================================================================
-        // 21. HUB, SHOWCASE, ASSIGNMENT, CERTIFICATE HELPERS
+        // 19. LOAD HERO SETTINGS & INIT
+        // ================================================================
+        async function loadHeroSettings() {
+            const doc = await db.collection('settings').doc('hero').get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.badge) heroBadge.textContent = data.badge;
+                if (data.title) document.getElementById('heroTitle').innerHTML =
+                    `${data.title} <span class="gold">التصميم</span>`;
+                if (data.desc) heroDesc.textContent = data.desc;
+                if (data.btn1) heroBtn1.textContent = data.btn1;
+                if (data.btn2) heroBtn2.textContent = data.btn2;
+            }
+        }
+
+        AOS.init({ duration: 800, once: true, offset: 100 });
+        window.addEventListener('load', () => {
+            document.getElementById('preloader').style.opacity = '0';
+            document.getElementById('preloader').style.visibility = 'hidden';
+            loadHeroSettings();
+            loadCourses();
+            if (currentUser) loadUserData(currentUser.uid);
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+                    document.getElementById('admin' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset
+                        .tab.slice(1)).classList.add('active');
+                    if (isAdmin) loadAllAdminData();
+                });
+            });
+            document.getElementById('addCourseBtn').addEventListener('click', openAddCourse);
+            document.getElementById('manageAccessCodesBtn').addEventListener('click', () => {
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('[data-tab="codes"]').classList.add('active');
+                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('adminCodes').classList.add('active');
+            });
+            document.getElementById('manageAIBtn').addEventListener('click', () => {
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('[data-tab="aiadmin"]').classList.add('active');
+                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('adminAiadmin').classList.add('active');
+            });
+            document.getElementById('hubNewPostBtn').addEventListener('click', () => {
+                const t = translations[currentLang] || translations.ar;
+                const content = document.getElementById('formModalContent');
+                content.innerHTML = `
+                    <button class="close-lightbox" onclick="document.getElementById('formModal').classList.remove('active')">&times;</button>
+                    <h3 style="color:var(--accent);">${t.hubNewPost}</h3>
+                    <div class="form-group"><label>المحتوى</label><textarea id="hubPostContent" rows="4"></textarea></div>
+                    <div class="form-group"><label>صورة (رابط)</label><input type="text" id="hubPostImage" placeholder="https://..."></div>
+                    <button class="btn btn-primary" onclick="createHubPost()">💾 ${t.share}</button>
+                `;
+                document.getElementById('formModal').classList.add('active');
+            });
+            document.getElementById('hubManageBtn').addEventListener('click', () => {
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('[data-tab="hubadmin"]').classList.add('active');
+                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('adminHubadmin').classList.add('active');
+            });
+            document.getElementById('addShowcaseBtn').addEventListener('click', openAddShowcaseItem);
+        });
+
+        // ================================================================
+        // 20. HUB, SHOWCASE, ASSIGNMENT, CERTIFICATE HELPERS
         // ================================================================
         window.likePost = async function(postId) {
             const post = allHubPosts.find(p => p.id === postId);
@@ -5155,79 +5243,12 @@
         };
 
         // ================================================================
-        // 22. LOAD HERO SETTINGS & INIT
-        // ================================================================
-        async function loadHeroSettings() {
-            const doc = await db.collection('settings').doc('hero').get();
-            if (doc.exists) {
-                const data = doc.data();
-                if (data.badge) heroBadge.textContent = data.badge;
-                if (data.title) document.getElementById('heroTitle').innerHTML =
-                    `${data.title} <span class="gold">التصميم</span>`;
-                if (data.desc) heroDesc.textContent = data.desc;
-                if (data.btn1) heroBtn1.textContent = data.btn1;
-                if (data.btn2) heroBtn2.textContent = data.btn2;
-            }
-        }
-
-        AOS.init({ duration: 800, once: true, offset: 100 });
-        window.addEventListener('load', () => {
-            document.getElementById('preloader').style.opacity = '0';
-            document.getElementById('preloader').style.visibility = 'hidden';
-            loadHeroSettings();
-            loadCourses();
-            if (currentUser) loadUserData(currentUser.uid);
-            document.querySelectorAll('.admin-tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
-                    document.getElementById('admin' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset
-                        .tab.slice(1)).classList.add('active');
-                    if (isAdmin) loadAllAdminData();
-                });
-            });
-            document.getElementById('addCourseBtn').addEventListener('click', openAddCourse);
-            document.getElementById('manageAccessCodesBtn').addEventListener('click', () => {
-                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-                document.querySelector('[data-tab="codes"]').classList.add('active');
-                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
-                document.getElementById('adminCodes').classList.add('active');
-            });
-            document.getElementById('manageAIBtn').addEventListener('click', () => {
-                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-                document.querySelector('[data-tab="aiadmin"]').classList.add('active');
-                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
-                document.getElementById('adminAiadmin').classList.add('active');
-            });
-            document.getElementById('hubNewPostBtn').addEventListener('click', () => {
-                const t = translations[currentLang] || translations.ar;
-                const content = document.getElementById('formModalContent');
-                content.innerHTML = `
-                    <button class="close-lightbox" onclick="document.getElementById('formModal').classList.remove('active')">&times;</button>
-                    <h3 style="color:var(--accent);">${t.hubNewPost}</h3>
-                    <div class="form-group"><label>المحتوى</label><textarea id="hubPostContent" rows="4"></textarea></div>
-                    <div class="form-group"><label>صورة (رابط)</label><input type="text" id="hubPostImage" placeholder="https://..."></div>
-                    <button class="btn btn-primary" onclick="createHubPost()">💾 ${t.share}</button>
-                `;
-                document.getElementById('formModal').classList.add('active');
-            });
-            document.getElementById('hubManageBtn').addEventListener('click', () => {
-                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-                document.querySelector('[data-tab="hubadmin"]').classList.add('active');
-                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
-                document.getElementById('adminHubadmin').classList.add('active');
-            });
-            document.getElementById('addShowcaseBtn').addEventListener('click', openAddShowcaseItem);
-        });
-
-        // ================================================================
-        // 23. FINAL INIT
+        // 21. FINAL INIT
         // ================================================================
         console.log('🍍 أناناس أكاديمي - منصة تعليمية ذكية مع تكامل Groq AI');
         console.log('📚 جميع العناصر قابلة للتعديل من لوحة الإدارة');
         console.log('🤖 تم إعداد الذكاء الاصطناعي مع حد أسئلة يومي وباقات مرنة');
-        console.log('🖱️ أيقونة الذكاء الاصطناعي قابلة للسحب والتكبير');
+        console.log('🖥️ تم إضافة وضع الشاشة الكاملة للمحادثة مع تأثير البلور');
     </script>
 </body>
 </html>
