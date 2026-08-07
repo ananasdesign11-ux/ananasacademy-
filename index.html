@@ -699,16 +699,29 @@
             align-items: center;
             justify-content: center;
             font-size: 1.8rem;
-            cursor: pointer;
+            cursor: grab;
             z-index: 550;
             box-shadow: 0 4px 25px rgba(74, 144, 226, 0.4);
-            transition: var(--transition);
+            transition: box-shadow 0.3s, transform 0.2s;
             border: none;
+            user-select: none;
+            touch-action: none;
         }
         .ai-chat-icon:hover {
-            transform: scale(1.08);
+            transform: scale(1.05);
             box-shadow: 0 8px 35px rgba(74, 144, 226, 0.5);
         }
+        .ai-chat-icon:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+        .ai-chat-icon.dragging {
+            cursor: grabbing;
+            transform: scale(0.95);
+            box-shadow: 0 12px 45px rgba(74, 144, 226, 0.6);
+            transition: none;
+        }
+
         .ai-chat-window {
             position: fixed;
             bottom: 100px;
@@ -738,12 +751,23 @@
             font-weight: 700;
             flex-shrink: 0;
         }
+        .ai-chat-header .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
         .ai-chat-header button {
             background: none;
             border: none;
             color: #fff;
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .ai-chat-header button:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
         .ai-chat-messages {
             flex: 1;
@@ -815,6 +839,67 @@
             border-top: 1px solid var(--border);
             flex-shrink: 0;
             background: var(--bg-secondary);
+        }
+
+        /* ===== AI FULLSCREEN OVERLAY ===== */
+        .ai-fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 7000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeInBlur 0.3s ease;
+        }
+        .ai-fullscreen-overlay.active {
+            display: flex;
+        }
+        @keyframes fadeInBlur {
+            from {
+                opacity: 0;
+                backdrop-filter: blur(0px);
+            }
+            to {
+                opacity: 1;
+                backdrop-filter: blur(12px);
+            }
+        }
+        .ai-fullscreen-overlay .ai-chat-window {
+            position: relative;
+            bottom: auto;
+            right: auto;
+            width: 95%;
+            max-width: 900px;
+            height: 90vh;
+            max-height: 90vh;
+            z-index: 7001;
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            display: flex;
+        }
+        .ai-fullscreen-overlay .ai-chat-window .ai-chat-header {
+            border-radius: 24px 24px 0 0;
+        }
+        .ai-fullscreen-overlay .ai-chat-window .ai-chat-header .header-actions button {
+            font-size: 1.3rem;
+        }
+        .ai-fullscreen-overlay .ai-chat-messages {
+            padding: 20px;
+        }
+        .ai-fullscreen-overlay .ai-chat-input {
+            padding: 14px 20px;
+        }
+        .ai-fullscreen-overlay .ai-chat-input input {
+            font-size: 1.05rem;
+            padding: 12px 18px;
+        }
+        .ai-fullscreen-overlay .ai-chat-input button {
+            font-size: 1.1rem;
+            padding: 10px 24px;
         }
 
         /* ===== AI BUTTON IN LESSONS/QUIZZES ===== */
@@ -1458,6 +1543,11 @@
                 height: 400px;
                 bottom: 80px;
             }
+            .ai-fullscreen-overlay .ai-chat-window {
+                height: 85vh;
+                max-height: 85vh;
+                width: 98%;
+            }
         }
         @media(max-width:576px) {
             .container {
@@ -1504,6 +1594,14 @@
             .ai-chat-window {
                 height: 350px;
                 bottom: 70px;
+                right: 5px;
+                width: 98%;
+            }
+            .ai-fullscreen-overlay .ai-chat-window {
+                height: 80vh;
+                max-height: 80vh;
+                width: 100%;
+                border-radius: 16px;
             }
             .certificate-preview .cert-title {
                 font-size: 1.5rem;
@@ -1764,12 +1862,20 @@
         </div>
     </section>
 
+    <!-- ===== AI FULLSCREEN OVERLAY ===== -->
+    <div class="ai-fullscreen-overlay" id="aiFullscreenOverlay">
+        <!-- يتم نسخ محتوى نافذة المحادثة هنا ديناميكياً -->
+    </div>
+
     <!-- ===== AI CHAT ICON & WINDOW ===== -->
     <button class="ai-chat-icon" id="aiChatIcon"><i class="fas fa-robot"></i></button>
     <div class="ai-chat-window" id="aiChatWindow">
         <div class="ai-chat-header">
             <span id="aiChatTitle">🤖 أناناس AI</span>
-            <button id="aiChatClose">&times;</button>
+            <div class="header-actions">
+                <button id="aiChatExpandBtn" title="تكبير"><i class="fas fa-expand"></i></button>
+                <button id="aiChatCloseBtn" title="إغلاق">&times;</button>
+            </div>
         </div>
         <div class="ai-chat-messages" id="aiChatMessages">
             <div class="ai-msg" id="aiWelcomeMsg">مرحباً! أنا أناناس AI، مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟</div>
@@ -1917,6 +2023,15 @@
         const siteLogo = $('siteLogo'),
             heroLogo = $('heroLogo'),
             brandName = $('brandName');
+        const aiChatIcon = $('aiChatIcon');
+        const aiChatWindow = $('aiChatWindow');
+        const aiChatMessages = $('aiChatMessages');
+        const aiChatInput = $('aiChatInput');
+        const aiChatSend = $('aiChatSend');
+        const aiChatCloseBtn = $('aiChatCloseBtn');
+        const aiChatExpandBtn = $('aiChatExpandBtn');
+        const aiFullscreenOverlay = $('aiFullscreenOverlay');
+        const aiChatLimit = $('aiChatLimit');
 
         // ================================================================
         // 4. AUTH
@@ -2563,7 +2678,179 @@
         animateParticles();
 
         // ================================================================
-        // 8. COURSES
+        // 8. AI CHAT - DRAGGABLE ICON & FULLSCREEN
+        // ================================================================
+        // --- Draggable AI Icon ---
+        let isDragging = false;
+        let dragStartX = 0,
+            dragStartY = 0;
+        let dragOffsetX = 0,
+            dragOffsetY = 0;
+        let iconPosX = 0,
+            iconPosY = 0;
+
+        // Load saved position
+        try {
+            const saved = localStorage.getItem('aiChatIconPos');
+            if (saved) {
+                const pos = JSON.parse(saved);
+                iconPosX = pos.x || 0;
+                iconPosY = pos.y || 0;
+                aiChatIcon.style.transform = `translate(${iconPosX}px, ${iconPosY}px)`;
+            }
+        } catch (e) {}
+
+        aiChatIcon.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            isDragging = true;
+            const rect = aiChatIcon.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
+            aiChatIcon.classList.add('dragging');
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const newX = e.clientX - dragOffsetX;
+            const newY = e.clientY - dragOffsetY;
+            // Keep within viewport bounds
+            const maxX = window.innerWidth - 70;
+            const maxY = window.innerHeight - 70;
+            iconPosX = Math.max(0, Math.min(newX, maxX));
+            iconPosY = Math.max(0, Math.min(newY, maxY));
+            aiChatIcon.style.transform = `translate(${iconPosX}px, ${iconPosY}px)`;
+            e.preventDefault();
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                aiChatIcon.classList.remove('dragging');
+                // Save position
+                try {
+                    localStorage.setItem('aiChatIconPos', JSON.stringify({ x: iconPosX, y: iconPosY }));
+                } catch (e) {}
+            }
+        });
+
+        // Touch support
+        aiChatIcon.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            isDragging = true;
+            const rect = aiChatIcon.getBoundingClientRect();
+            dragOffsetX = touch.clientX - rect.left;
+            dragOffsetY = touch.clientY - rect.top;
+            aiChatIcon.classList.add('dragging');
+            e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const touch = e.touches[0];
+            const newX = touch.clientX - dragOffsetX;
+            const newY = touch.clientY - dragOffsetY;
+            const maxX = window.innerWidth - 70;
+            const maxY = window.innerHeight - 70;
+            iconPosX = Math.max(0, Math.min(newX, maxX));
+            iconPosY = Math.max(0, Math.min(newY, maxY));
+            aiChatIcon.style.transform = `translate(${iconPosX}px, ${iconPosY}px)`;
+            e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            if (isDragging) {
+                isDragging = false;
+                aiChatIcon.classList.remove('dragging');
+                try {
+                    localStorage.setItem('aiChatIconPos', JSON.stringify({ x: iconPosX, y: iconPosY }));
+                } catch (e) {}
+            }
+        });
+
+        // --- AI Chat Toggle ---
+        aiChatIcon.addEventListener('click', (e) => {
+            // Only toggle if not dragging
+            if (isDragging) return;
+            aiChatWindow.classList.toggle('active');
+            if (aiChatWindow.classList.contains('active')) {
+                aiChatInput.focus();
+            }
+        });
+
+        aiChatCloseBtn.addEventListener('click', () => {
+            aiChatWindow.classList.remove('active');
+            aiFullscreenOverlay.classList.remove('active');
+        });
+
+        // --- Fullscreen / Expand ---
+        aiChatExpandBtn.addEventListener('click', () => {
+            const overlay = aiFullscreenOverlay;
+            // Clone the chat window into the overlay
+            const chatClone = aiChatWindow.cloneNode(true);
+            // Remove the expand button from clone (keep close)
+            const cloneExpandBtn = chatClone.querySelector('#aiChatExpandBtn');
+            if (cloneExpandBtn) cloneExpandBtn.remove();
+            // Update close button to close overlay
+            const cloneCloseBtn = chatClone.querySelector('#aiChatCloseBtn');
+            if (cloneCloseBtn) {
+                cloneCloseBtn.onclick = () => {
+                    overlay.classList.remove('active');
+                };
+            }
+            // Remove existing content and append clone
+            overlay.innerHTML = '';
+            overlay.appendChild(chatClone);
+            // Make sure the chat window inside overlay has proper styles
+            chatClone.style.position = 'relative';
+            chatClone.style.bottom = 'auto';
+            chatClone.style.right = 'auto';
+            chatClone.style.width = '95%';
+            chatClone.style.maxWidth = '900px';
+            chatClone.style.height = '90vh';
+            chatClone.style.maxHeight = '90vh';
+            chatClone.style.display = 'flex';
+            chatClone.style.borderRadius = '24px';
+            // Ensure header has proper border radius
+            const header = chatClone.querySelector('.ai-chat-header');
+            if (header) {
+                header.style.borderRadius = '24px 24px 0 0';
+            }
+            // Fix input and messages
+            const messages = chatClone.querySelector('.ai-chat-messages');
+            if (messages) messages.style.padding = '20px';
+            const inputArea = chatClone.querySelector('.ai-chat-input');
+            if (inputArea) inputArea.style.padding = '14px 20px';
+            // Show overlay
+            overlay.classList.add('active');
+        });
+
+        // Close fullscreen on overlay click (outside chat)
+        aiFullscreenOverlay.addEventListener('click', (e) => {
+            if (e.target === aiFullscreenOverlay) {
+                aiFullscreenOverlay.classList.remove('active');
+            }
+        });
+
+        // Also close with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (aiFullscreenOverlay.classList.contains('active')) {
+                    aiFullscreenOverlay.classList.remove('active');
+                }
+                if (aiChatWindow.classList.contains('active')) {
+                    aiChatWindow.classList.remove('active');
+                }
+            }
+        });
+
+        // ================================================================
+        // 9. AI CHAT FUNCTIONALITY (rest of the code remains the same)
+        // ================================================================
+        // ... (all the existing AI chat, courses, dashboard, admin functions remain)
+
+        // ================================================================
+        // 10. COURSES
         // ================================================================
         async function loadCourses() {
             const snapshot = await db.collection('courses').orderBy('createdAt', 'desc').get();
@@ -2757,7 +3044,7 @@
         }
 
         // ================================================================
-        // 9. XP SYSTEM
+        // 11. XP SYSTEM
         // ================================================================
         async function addXP(uid, amount) {
             const doc = await db.collection('users').doc(uid).get();
@@ -2775,7 +3062,7 @@
         }
 
         // ================================================================
-        // 10. QUIZ SYSTEM
+        // 12. QUIZ SYSTEM
         // ================================================================
         async function openQuiz(courseId, lessonId, quizId) {
             const snapshot = await db.collection('quizzes').doc(quizId).get();
@@ -2890,7 +3177,7 @@
         }
 
         // ================================================================
-        // 11. DASHBOARD
+        // 13. DASHBOARD
         // ================================================================
         function renderDashboard() {
             if (!currentUser || !currentUserData) { dashGuest.style.display = 'block';
@@ -2973,7 +3260,7 @@
         }
 
         // ================================================================
-        // 12. AI SYSTEM (Groq Integration)
+        // 14. AI SYSTEM (Groq Integration)
         // ================================================================
         function updateAIQuestionLimit() {
             if (!currentUserData) return;
@@ -3176,18 +3463,12 @@
             container.innerHTML = html;
         }
 
-        // AI Chat UI
-        document.getElementById('aiChatIcon').addEventListener('click', () => {
-            document.getElementById('aiChatWindow').classList.toggle('active');
-        });
-        document.getElementById('aiChatClose').addEventListener('click', () => {
-            document.getElementById('aiChatWindow').classList.remove('active');
-        });
-        document.getElementById('aiChatSend').addEventListener('click', async () => {
-            const input = document.getElementById('aiChatInput');
+        // AI Chat UI - Send message
+        aiChatSend.addEventListener('click', async () => {
+            const input = aiChatInput;
             const msg = input.value.trim();
             if (!msg) return;
-            const messages = document.getElementById('aiChatMessages');
+            const messages = aiChatMessages;
             messages.innerHTML += `<div class="user-msg">${msg}</div>`;
             input.value = '';
             messages.scrollTop = messages.scrollHeight;
@@ -3215,8 +3496,9 @@
             messages.scrollTop = messages.scrollHeight;
             updateAIQuestionLimit();
         });
-        document.getElementById('aiChatInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('aiChatSend').click();
+
+        aiChatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') aiChatSend.click();
         });
 
         // AI Context Functions
@@ -3228,9 +3510,8 @@
                 `أنا في درس "${lesson ? lesson.title : 'درس'}" في دورة التصميم. اشرح لي هذا الدرس بشكل مبسط، وقدم لي نصائح لفهمه بشكل أفضل.`;
             const result = await askAI(prompt, { courseId, lessonId });
             if (result.error) { alert('❌ ' + result.error); return; }
-            // Open AI chat with response
-            document.getElementById('aiChatWindow').classList.add('active');
-            const messages = document.getElementById('aiChatMessages');
+            aiChatWindow.classList.add('active');
+            const messages = aiChatMessages;
             messages.innerHTML += `<div class="user-msg">${prompt}</div>`;
             messages.innerHTML += `<div class="ai-msg">${result.reply}</div>`;
             messages.scrollTop = messages.scrollHeight;
@@ -3245,8 +3526,8 @@
                 `أنا في دورة "${course ? course.title : 'تصميم'}". أعطني نظرة عامة عن الدورة، وما هي المهارات التي سأتعلمها، وكيف يمكنني الاستفادة القصوى منها.`;
             const result = await askAI(prompt, { courseId });
             if (result.error) { alert('❌ ' + result.error); return; }
-            document.getElementById('aiChatWindow').classList.add('active');
-            const messages = document.getElementById('aiChatMessages');
+            aiChatWindow.classList.add('active');
+            const messages = aiChatMessages;
             messages.innerHTML += `<div class="user-msg">${prompt}</div>`;
             messages.innerHTML += `<div class="ai-msg">${result.reply}</div>`;
             messages.scrollTop = messages.scrollHeight;
@@ -3261,8 +3542,8 @@
                 `أنا في اختبار "${quiz.exists ? quiz.data().title : 'اختبار'}". ساعدني في فهم كيفية الإجابة على أسئلة الاختبار بشكل صحيح.`;
             const result = await askAI(prompt, { courseId, lessonId, quizId });
             if (result.error) { alert('❌ ' + result.error); return; }
-            document.getElementById('aiChatWindow').classList.add('active');
-            const messages = document.getElementById('aiChatMessages');
+            aiChatWindow.classList.add('active');
+            const messages = aiChatMessages;
             messages.innerHTML += `<div class="user-msg">${prompt}</div>`;
             messages.innerHTML += `<div class="ai-msg">${result.reply}</div>`;
             messages.scrollTop = messages.scrollHeight;
@@ -3282,8 +3563,8 @@
                 `أنا في اختبار وأواجه هذا السؤال: "${qText}". ساعدني في فهم السؤال وإعطائي تلميحات للإجابة عليه دون إعطائي الإجابة مباشرة.`;
             const result = await askAI(prompt, { courseId, lessonId, quizId, questionIndex });
             if (result.error) { alert('❌ ' + result.error); return; }
-            document.getElementById('aiChatWindow').classList.add('active');
-            const messages = document.getElementById('aiChatMessages');
+            aiChatWindow.classList.add('active');
+            const messages = aiChatMessages;
             messages.innerHTML += `<div class="user-msg">${prompt}</div>`;
             messages.innerHTML += `<div class="ai-msg">${result.reply}</div>`;
             messages.scrollTop = messages.scrollHeight;
@@ -3291,7 +3572,7 @@
         };
 
         // ================================================================
-        // 13. ADMIN PANEL (Full)
+        // 15. ADMIN PANEL (Full) - abbreviated for brevity, but all functions exist
         // ================================================================
         async function loadAllAdminData() {
             await loadCourses();
@@ -3390,9 +3671,6 @@
 
         function updateBranding() {
             const isLight = document.body.classList.contains('light-mode');
-            const name = currentLang === 'ar' ? siteSettings.nameAr : siteSettings.nameEn;
-            brandName.innerHTML = name.replace(/أكاديمي|Academy/, match =>
-                ` ${match} <span class="gold">${currentLang === 'ar' ? 'أكاديمي' : 'Academy'}</span>`);
             if (currentLang === 'ar') {
                 brandName.innerHTML = `${siteSettings.nameAr || 'أناناس'} <span class="gold">أكاديمي</span>`;
             } else {
@@ -3400,7 +3678,6 @@
             }
             siteLogo.src = isLight ? siteSettings.logo : siteSettings.logoDark;
             heroLogo.src = isLight ? siteSettings.logo : siteSettings.logoDark;
-            // Update hero desc with tagline
             heroDesc.textContent = siteSettings.tagline || heroDesc.textContent;
         }
 
@@ -3559,7 +3836,7 @@
         }
 
         // ================================================================
-        // 14. RENDER ADMIN PANELS (اختصار)
+        // 16. RENDER ADMIN PANELS (abbreviated - core functions exist)
         // ================================================================
         function renderAdminPanels() {
             renderAdminCourses();
@@ -3797,11 +4074,9 @@
             if (!student) return;
             const course = allCourses.find(c => c.id === courseId);
             if (!course) return;
-            // Check if already issued
             const existing = await db.collection('issuedCertificates').where('studentUid', '==', studentUid).where(
                 'courseId', '==', courseId).get();
             if (!existing.empty) { alert('✅ شهادة موجودة مسبقاً لهذا الطالب في هذه الدورة'); return; }
-
             const certId = 'CERT-' + Date.now() + '-' + Math.random().toString(36).slice(-6);
             const certData = {
                 studentUid,
@@ -3987,7 +4262,7 @@
         }
 
         // ================================================================
-        // 15. ADMIN CRUD FUNCTIONS
+        // 17. ADMIN CRUD FUNCTIONS (wrapped for global access)
         // ================================================================
         window.openAddCourse = function() {
             const t = translations[currentLang] || translations.ar;
@@ -4326,7 +4601,7 @@
         };
 
         // ================================================================
-        // 16. LEVELS, ACHIEVEMENTS, XP SETTINGS, SITE SETTINGS
+        // 18. LEVELS, ACHIEVEMENTS, XP SETTINGS, SITE SETTINGS
         // ================================================================
         window.openAddLevel = function() {
             const t = translations[currentLang] || translations.ar;
@@ -4473,7 +4748,7 @@
         };
 
         // ================================================================
-        // 17. ADDITIONAL ADMIN FUNCTIONS
+        // 19. ADDITIONAL ADMIN FUNCTIONS
         // ================================================================
         window.viewStudent = function(uid) {
             const student = allStudents.find(s => s.uid === uid);
@@ -4506,7 +4781,7 @@
         };
 
         // ================================================================
-        // 18. EDIT HERO & TAGLINE
+        // 20. EDIT HERO & TAGLINE
         // ================================================================
         document.getElementById('editHeroBtn').addEventListener('click', () => {
             const t = translations[currentLang] || translations.ar;
@@ -4567,74 +4842,7 @@
         };
 
         // ================================================================
-        // 19. LOAD HERO SETTINGS & INIT
-        // ================================================================
-        async function loadHeroSettings() {
-            const doc = await db.collection('settings').doc('hero').get();
-            if (doc.exists) {
-                const data = doc.data();
-                if (data.badge) heroBadge.textContent = data.badge;
-                if (data.title) document.getElementById('heroTitle').innerHTML =
-                    `${data.title} <span class="gold">التصميم</span>`;
-                if (data.desc) heroDesc.textContent = data.desc;
-                if (data.btn1) heroBtn1.textContent = data.btn1;
-                if (data.btn2) heroBtn2.textContent = data.btn2;
-            }
-        }
-
-        AOS.init({ duration: 800, once: true, offset: 100 });
-        window.addEventListener('load', () => {
-            document.getElementById('preloader').style.opacity = '0';
-            document.getElementById('preloader').style.visibility = 'hidden';
-            loadHeroSettings();
-            loadCourses();
-            if (currentUser) loadUserData(currentUser.uid);
-            document.querySelectorAll('.admin-tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
-                    document.getElementById('admin' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset
-                        .tab.slice(1)).classList.add('active');
-                    if (isAdmin) loadAllAdminData();
-                });
-            });
-            document.getElementById('addCourseBtn').addEventListener('click', openAddCourse);
-            document.getElementById('manageAccessCodesBtn').addEventListener('click', () => {
-                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-                document.querySelector('[data-tab="codes"]').classList.add('active');
-                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
-                document.getElementById('adminCodes').classList.add('active');
-            });
-            document.getElementById('manageAIBtn').addEventListener('click', () => {
-                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-                document.querySelector('[data-tab="aiadmin"]').classList.add('active');
-                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
-                document.getElementById('adminAiadmin').classList.add('active');
-            });
-            document.getElementById('hubNewPostBtn').addEventListener('click', () => {
-                const t = translations[currentLang] || translations.ar;
-                const content = document.getElementById('formModalContent');
-                content.innerHTML = `
-                    <button class="close-lightbox" onclick="document.getElementById('formModal').classList.remove('active')">&times;</button>
-                    <h3 style="color:var(--accent);">${t.hubNewPost}</h3>
-                    <div class="form-group"><label>المحتوى</label><textarea id="hubPostContent" rows="4"></textarea></div>
-                    <div class="form-group"><label>صورة (رابط)</label><input type="text" id="hubPostImage" placeholder="https://..."></div>
-                    <button class="btn btn-primary" onclick="createHubPost()">💾 ${t.share}</button>
-                `;
-                document.getElementById('formModal').classList.add('active');
-            });
-            document.getElementById('hubManageBtn').addEventListener('click', () => {
-                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-                document.querySelector('[data-tab="hubadmin"]').classList.add('active');
-                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
-                document.getElementById('adminHubadmin').classList.add('active');
-            });
-            document.getElementById('addShowcaseBtn').addEventListener('click', openAddShowcaseItem);
-        });
-
-        // ================================================================
-        // 20. HUB, SHOWCASE, ASSIGNMENT, CERTIFICATE HELPERS
+        // 21. HUB, SHOWCASE, ASSIGNMENT, CERTIFICATE HELPERS
         // ================================================================
         window.likePost = async function(postId) {
             const post = allHubPosts.find(p => p.id === postId);
@@ -4947,11 +5155,79 @@
         };
 
         // ================================================================
-        // 21. FINAL INIT
+        // 22. LOAD HERO SETTINGS & INIT
+        // ================================================================
+        async function loadHeroSettings() {
+            const doc = await db.collection('settings').doc('hero').get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.badge) heroBadge.textContent = data.badge;
+                if (data.title) document.getElementById('heroTitle').innerHTML =
+                    `${data.title} <span class="gold">التصميم</span>`;
+                if (data.desc) heroDesc.textContent = data.desc;
+                if (data.btn1) heroBtn1.textContent = data.btn1;
+                if (data.btn2) heroBtn2.textContent = data.btn2;
+            }
+        }
+
+        AOS.init({ duration: 800, once: true, offset: 100 });
+        window.addEventListener('load', () => {
+            document.getElementById('preloader').style.opacity = '0';
+            document.getElementById('preloader').style.visibility = 'hidden';
+            loadHeroSettings();
+            loadCourses();
+            if (currentUser) loadUserData(currentUser.uid);
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+                    document.getElementById('admin' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset
+                        .tab.slice(1)).classList.add('active');
+                    if (isAdmin) loadAllAdminData();
+                });
+            });
+            document.getElementById('addCourseBtn').addEventListener('click', openAddCourse);
+            document.getElementById('manageAccessCodesBtn').addEventListener('click', () => {
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('[data-tab="codes"]').classList.add('active');
+                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('adminCodes').classList.add('active');
+            });
+            document.getElementById('manageAIBtn').addEventListener('click', () => {
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('[data-tab="aiadmin"]').classList.add('active');
+                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('adminAiadmin').classList.add('active');
+            });
+            document.getElementById('hubNewPostBtn').addEventListener('click', () => {
+                const t = translations[currentLang] || translations.ar;
+                const content = document.getElementById('formModalContent');
+                content.innerHTML = `
+                    <button class="close-lightbox" onclick="document.getElementById('formModal').classList.remove('active')">&times;</button>
+                    <h3 style="color:var(--accent);">${t.hubNewPost}</h3>
+                    <div class="form-group"><label>المحتوى</label><textarea id="hubPostContent" rows="4"></textarea></div>
+                    <div class="form-group"><label>صورة (رابط)</label><input type="text" id="hubPostImage" placeholder="https://..."></div>
+                    <button class="btn btn-primary" onclick="createHubPost()">💾 ${t.share}</button>
+                `;
+                document.getElementById('formModal').classList.add('active');
+            });
+            document.getElementById('hubManageBtn').addEventListener('click', () => {
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('[data-tab="hubadmin"]').classList.add('active');
+                document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('adminHubadmin').classList.add('active');
+            });
+            document.getElementById('addShowcaseBtn').addEventListener('click', openAddShowcaseItem);
+        });
+
+        // ================================================================
+        // 23. FINAL INIT
         // ================================================================
         console.log('🍍 أناناس أكاديمي - منصة تعليمية ذكية مع تكامل Groq AI');
         console.log('📚 جميع العناصر قابلة للتعديل من لوحة الإدارة');
         console.log('🤖 تم إعداد الذكاء الاصطناعي مع حد أسئلة يومي وباقات مرنة');
+        console.log('🖱️ أيقونة الذكاء الاصطناعي قابلة للسحب والتكبير');
     </script>
 </body>
 </html>
